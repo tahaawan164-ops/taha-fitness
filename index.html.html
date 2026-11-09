@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Taha Fitness</title>
+<style>
+  :root{--bg:#0c0e13;--card:#161a22;--line:#262c38;--text:#f1f3f8;--muted:#9aa3b5;--acc:#ff6b35;--ok:#34d399;--bad:#f87171;--blue:#60a5fa;--soft:#1d2230}
+  body[data-theme="light"]{--bg:#f4f6fb;--card:#fff;--line:#e1e5ee;--text:#16191f;--muted:#5f6878;--soft:#eef1f7}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--text);font-size:16px;line-height:1.5}
+  button,input,select{font:inherit}
+  .wrap{max-width:640px;margin:0 auto;padding:18px 16px 40px}
+  h1{font-size:22px;margin:0}
+  h2{font-size:18px;margin:0 0 6px}
+  .hint{color:var(--muted);font-size:14px}
+
+  #splash{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:50;transition:opacity .6s,visibility .6s}
+  #splash.gone{opacity:0;visibility:hidden}
+  .logo{width:110px;height:110px;animation:pop .8s cubic-bezier(.2,1.4,.4,1) both}
+  .logo .ring{fill:none;stroke:var(--acc);stroke-width:4;stroke-dasharray:340;stroke-dashoffset:340;animation:draw 1.1s ease forwards}
+  .logo .bar{fill:#ffb347;opacity:0;animation:fade .4s .8s forwards}
+  @keyframes draw{to{stroke-dashoffset:0}}
+  @keyframes pop{from{transform:scale(.4);opacity:0}to{transform:none;opacity:1}}
+  @keyframes fade{to{opacity:1}}
+  #splashTitle{margin-top:20px;font-size:26px;font-weight:800;display:flex;flex-wrap:wrap;justify-content:center}
+  #splashTitle span{opacity:0;transform:translateY(12px);animation:letter .45s forwards;white-space:pre}
+  #splashTitle .acc{color:var(--acc)}
+  @keyframes letter{to{opacity:1;transform:none}}
+  #splashSub{color:var(--muted);margin-top:6px;opacity:0;animation:fade .6s 2.2s forwards}
+
+  .top{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+  .top svg{width:36px;height:36px;flex:none}
+  .top .grow{flex:1}
+  .iconbtn{background:var(--card);border:1px solid var(--line);color:var(--text);width:40px;height:40px;border-radius:12px;cursor:pointer;font-size:18px}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;margin-bottom:14px}
+  .big{display:flex;flex-direction:column;align-items:flex-start;gap:6px;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);color:var(--text);border-radius:18px;padding:18px;cursor:pointer;transition:transform .15s}
+  .big:active{transform:scale(.98)}
+  .big .ic{font-size:26px}
+  .big b{font-size:17px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  @media(max-width:480px){.grid,.grid3{grid-template-columns:1fr}}
+
+  .btn{background:var(--acc);color:#fff;border:0;padding:14px 18px;border-radius:14px;font-weight:700;font-size:16px;cursor:pointer;width:100%}
+  .btn.sec{background:var(--soft);color:var(--text);border:1px solid var(--line)}
+  .btn.small{width:auto;padding:9px 14px;font-size:14px}
+  .field{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+  .field label{font-weight:600}
+  .field small{color:var(--muted)}
+  input,select{background:var(--soft);border:1px solid var(--line);color:var(--text);padding:13px;border-radius:12px;width:100%}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .row>*{flex:1;min-width:120px}
+
+  .status{display:flex;gap:10px}
+  .status>div{flex:1;background:var(--soft);border-radius:14px;padding:12px;text-align:center}
+  .status b{display:block;font-size:20px}
+  .status span{font-size:13px;color:var(--muted)}
+  .bar{height:10px;background:var(--line);border-radius:8px;overflow:hidden;margin-top:10px}
+  .bar>div{height:100%;background:var(--ok);transition:width .5s}
+  .bar.over>div{background:var(--bad)}
+  .bar.water>div{background:var(--blue)}
+
+  .meal{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--line)}
+  .meal:last-child{border:0}
+  .meal small{color:var(--muted);display:block}
+  .ex{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line);gap:10px}
+  .ex:last-child{border:0}
+  .tag{display:inline-block;font-size:12px;padding:3px 9px;border-radius:20px;background:var(--soft);color:var(--muted);white-space:nowrap}
+  .tag.ok{background:#0f3d2b;color:var(--ok)}
+  .tag.warn{background:#3d2f0f;color:#fbbf24}
+  .tip{background:var(--soft);border-left:4px solid var(--acc);padding:12px 14px;border-radius:12px;margin-top:10px}
+  svg.chart{width:100%;height:150px;background:var(--soft);border-radius:12px}
+  .photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
+  .photos figure{margin:0;background:var(--soft);border-radius:12px;overflow:hidden}
+  .photos img{width:100%;height:160px;object-fit:cover;display:block}
+  .photos figcaption{font-size:12px;color:var(--muted);padding:6px 8px}
+  .cmp{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .cmp img{width:100%;border-radius:12px;max-height:280px;object-fit:cover}
+  @media(max-width:480px){.cmp{grid-template-columns:1fr}}
+
+  .screen{display:none}.screen.on{display:block}
+  .back{background:none;border:0;color:var(--acc);font-weight:700;font-size:16px;cursor:pointer;padding:0 0 10px}
+  .tabs{display:flex;gap:6px;overflow-x:auto;margin-bottom:12px}
+  .tabs button{background:var(--card);border:1px solid var(--line);color:var(--muted);padding:9px 12px;border-radius:12px;cursor:pointer;white-space:nowrap}
+  .tabs button.on{color:var(--text);border-color:var(--acc)}
+  .pane{display:none}.pane.on{display:block}
+
+  #help{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:16px;z-index:40}
+  #help.on{display:flex}
+  #help .card{max-width:480px;width:100%;margin:0}
+  #help ul{padding-left:18px}
+  #help li{margin:8px 0}
+
+  .steps{display:flex;gap:6px;margin-bottom:14px}
+  .steps i{flex:1;height:6px;border-radius:6px;background:var(--line)}
+  .steps i.on{background:var(--acc)}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:12px 18px;border-radius:12px;font-weight:600;opacity:0;transition:opacity .3s;pointer-events:none;z-index:60}
+  .toast.on{opacity:1}
+
+  /* bottom navigation */
+  nav{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--line);display:none;justify-content:space-around;padding:6px 2px;z-index:30}
+  nav button{background:none;border:0;color:var(--muted);font-size:11px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;padding:6px 2px;border-radius:10px;flex:1}
+  nav button .i{font-size:18px}
+  nav button.on{color:var(--acc);font-weight:700}
+  .wrap{padding-bottom:90px}
+
+  /* live agent chat */
+  .chat{display:flex;flex-direction:column;gap:8px;min-height:220px;max-height:380px;overflow-y:auto;padding:4px}
+  .msg{max-width:85%;padding:10px 13px;border-radius:14px;font-size:15px;line-height:1.45;white-space:pre-wrap}
+  .msg.bot{background:var(--soft);align-self:flex-start}
+  .msg.me{background:var(--acc);color:#fff;align-self:flex-end}
+  .chips{display:flex;gap:6px;flex-wrap:wrap}
+  .chips button{background:var(--soft);border:1px solid var(--line);color:var(--text);padding:7px 11px;border-radius:20px;cursor:pointer;font-size:13px}
+</style>
+</head>
+<body>
+
+<div id="splash">
+  <svg class="logo" viewBox="0 0 120 120" aria-hidden="true">
+    <circle class="ring" cx="60" cy="60" r="54" transform="rotate(-90 60 60)"/>
+    <rect class="bar" x="18" y="52" width="14" height="16" rx="3"/>
+    <rect class="bar" x="32" y="46" width="10" height="28" rx="3"/>
+    <rect class="bar" x="42" y="56" width="36" height="8" rx="3"/>
+    <rect class="bar" x="78" y="46" width="10" height="28" rx="3"/>
+    <rect class="bar" x="88" y="52" width="14" height="16" rx="3"/>
+  </svg>
+  <div id="splashTitle"></div>
+  <div id="splashSub">Your complete fitness companion</div>
+</div>
+
+<div class="wrap">
+  <div class="top">
+    <svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="54" fill="none" stroke="#ff6b35" stroke-width="7"/><rect x="18" y="52" width="14" height="16" rx="3" fill="#ffb347"/><rect x="32" y="46" width="10" height="28" rx="3" fill="#ffb347"/><rect x="42" y="56" width="36" height="8" rx="3" fill="#ffb347"/><rect x="78" y="46" width="10" height="28" rx="3" fill="#ffb347"/><rect x="88" y="52" width="14" height="16" rx="3" fill="#ffb347"/></svg>
+    <div class="grow"><h1>Taha Fitness</h1><div class="hint" id="greet"></div></div>
+    <button class="iconbtn" id="themeBtn" title="Switch mode">🌙</button>
+    <button class="iconbtn" id="helpBtn" title="Help">?</button>
+  </div>
+
+  <!-- SETUP -->
+  <section class="screen" id="s-setup">
+    <div class="steps" id="stepBar"><i class="on"></i><i></i><i></i><i></i></div>
+    <div class="card" id="setupCard"></div>
+  </section>
+
+  <!-- HOME -->
+  <section class="screen" id="s-home">
+    <div class="card">
+      <h2>Today's summary</h2>
+      <div class="status">
+        <div><b id="stKcal">0</b><span>kcal eaten</span></div>
+        <div><b id="stLeft">0</b><span>kcal left</span></div>
+        <div><b id="stPro">0</b><span>g protein</span></div>
+      </div>
+      <div class="bar" id="kBar"><div></div></div>
+      <div class="hint" id="kHint" style="margin-top:8px"></div>
+    </div>
+
+    <div class="grid">
+      <button class="big" data-go="food"><span class="ic">🍽️</span><b>Food & Water</b><span class="hint">Log what you ate and drank</span></button>
+      <button class="big" data-go="gym"><span class="ic">🏋️</span><b>Workout</b><span class="hint">Today's exercises</span></button>
+      <button class="big" data-go="weight"><span class="ic">⚖️</span><b>Body</b><span class="hint">Weight, sleep, steps, measurements</span></button>
+      <button class="big" data-go="progress"><span class="ic">📈</span><b>Progress</b><span class="hint">Charts, photos and reports</span></button>
+    </div>
+
+    <div class="card">
+      <h2 id="weekTitle">This week</h2>
+      <div id="weekReport"></div>
+    </div>
+
+    <div class="card">
+      <h2>Today's plan (made by the app)</h2>
+      <div class="hint">This plan fits your targets. Just follow it.</div>
+      <div id="planMeals" style="margin-top:8px"></div>
+      <button class="btn sec" id="useMeals" style="margin-top:10px">Add this food to today's list</button>
+    </div>
+
+    <div class="card">
+      <h2 id="todayTitle"></h2>
+      <div class="hint">Tick each exercise when you finish it.</div>
+      <div id="planGym" style="margin-top:8px"></div>
+      <button class="btn" id="finishGym" style="margin-top:10px">Mark today's workout complete</button>
+    </div>
+
+    <div class="card">
+      <h2>Agent advice</h2>
+      <div class="tip" id="advice"></div>
+    </div>
+  </section>
+
+  <!-- FOOD & WATER -->
+  <section class="screen" id="s-food">
+    <button class="back" data-go="home">← Back</button>
+    <div class="card">
+      <h2>Today's food</h2>
+      <div class="hint">Tap what you ate. It will be added to your list.</div>
+      <div class="grid" style="margin:14px 0 0;gap:8px">
+        <button class="btn sec" data-quick="Roti|120|3">🫓 Roti</button>
+        <button class="btn sec" data-quick="Chicken 100g|165|31">🍗 Chicken 100g</button>
+        <button class="btn sec" data-quick="2 Eggs|140|12">🥚 2 Eggs</button>
+        <button class="btn sec" data-quick="Dal bowl|150|9">🥣 Dal</button>
+        <button class="btn sec" data-quick="Milk 250ml|125|8">🥛 Milk</button>
+        <button class="btn sec" data-quick="Whey 1 scoop|120|24">💪 Whey</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Something else?</h2>
+      <div class="field"><label for="fName">Name</label><input id="fName" placeholder="e.g. Rice, 1 plate"></div>
+      <div class="row">
+        <div class="field"><label for="fKcal">Calories</label><input id="fKcal" type="number" placeholder="kcal"><small>Leave empty if you don't know</small></div>
+        <div class="field"><label for="fPro">Protein (g)</label><input id="fPro" type="number" placeholder="g"></div>
+      </div>
+      <button class="btn" id="fAdd">Add</button>
+    </div>
+    <div class="card">
+      <h2>Today's list</h2>
+      <div id="foodList"></div>
+      <button class="btn sec small" id="clearFood" style="margin-top:10px">Clear all</button>
+    </div>
+    <div class="card">
+      <h2>Water</h2>
+      <div class="bar water" id="wBar"><div></div></div>
+      <div class="hint" id="wTxt" style="margin:8px 0"></div>
+      <div class="row">
+        <button class="btn sec" data-water="250">+250 ml</button>
+        <button class="btn sec" data-water="500">+500 ml</button>
+        <button class="btn sec" id="wReset">Reset</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- WORKOUT -->
+  <section class="screen" id="s-gym">
+    <button class="back" data-go="home">← Back</button>
+    <div class="card">
+      <h2 id="gymTitle"></h2>
+      <div class="hint" id="gymNote"></div>
+      <div id="gymStatus" style="margin:8px 0"></div>
+      <div id="gymList" style="margin-top:8px"></div>
+      <div class="row" style="margin-top:12px">
+        <button class="btn sec" id="hardBtn">Harder (+1 set)</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>What did you lift?</h2>
+      <div class="hint">Enter weight and reps for each exercise, then save. The app will suggest your next weight.</div>
+      <div id="logList" style="margin-top:10px"></div>
+      <button class="btn" id="saveLog" style="margin-top:10px">Save</button>
+    </div>
+    <div class="card">
+      <h2>Exercise chart (last 4 weeks)</h2>
+      <select id="exSel" style="margin-bottom:10px"></select>
+      <svg class="chart" id="exChart" viewBox="0 0 600 150" preserveAspectRatio="none"></svg>
+      <div class="hint" id="exTxt" style="margin-top:8px"></div>
+    </div>
+  </section>
+
+  <!-- BODY -->
+  <section class="screen" id="s-weight">
+    <button class="back" data-go="home">← Back</button>
+    <div class="card">
+      <h2>Today's numbers</h2>
+      <div class="hint">Weigh yourself every morning, after using the toilet and before eating, on the same scale.</div>
+      <div class="grid3" style="margin-top:12px">
+        <div class="field"><label for="wIn">Weight (kg)</label><input id="wIn" type="number" step="0.1" placeholder="67.5"></div>
+        <div class="field"><label for="sIn">Steps</label><input id="sIn" type="number" placeholder="8000"></div>
+        <div class="field"><label for="slIn">Sleep (hours)</label><input id="slIn" type="number" step="0.5" placeholder="7.5"></div>
+      </div>
+      <button class="btn" id="wSave">Save today</button>
+      <div class="tip" id="wMsg" style="display:none"></div>
+    </div>
+    <div class="card">
+      <h2>Body measurements (once a week, in cm)</h2>
+      <div class="grid3">
+        <div class="field"><label for="mWaist">Waist</label><input id="mWaist" type="number" step="0.1" placeholder="At navel"></div>
+        <div class="field"><label for="mChest">Chest</label><input id="mChest" type="number" step="0.1" placeholder="Chest"></div>
+        <div class="field"><label for="mArm">Arm</label><input id="mArm" type="number" step="0.1" placeholder="Upper arm"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label for="mThigh">Thigh</label><input id="mThigh" type="number" step="0.1" placeholder="Thigh"></div>
+      </div>
+      <button class="btn sec" id="mSave">Save measurements</button>
+    </div>
+    <div class="card">
+      <h2>Measurement history</h2>
+      <div id="mHist" class="hint"></div>
+    </div>
+  </section>
+
+  <!-- PROGRESS -->
+  <section class="screen" id="s-progress">
+    <button class="back" data-go="home">← Back</button>
+    <div class="tabs">
+      <button class="on" data-p="pWeight">Weight</button>
+      <button data-p="pMeasure">Measurements</button>
+      <button data-p="pPhoto">Photos</button>
+      <button data-p="pLog">Auto update</button>
+    </div>
+
+    <div class="pane on" id="pWeight">
+      <div class="card">
+        <h2>Weight journey</h2>
+        <svg class="chart" id="chart" viewBox="0 0 600 150" preserveAspectRatio="none"></svg>
+        <div class="hint" id="pTxt" style="margin-top:8px"></div>
+      </div>
+      <div class="card">
+        <h2>Stall check and calorie coach</h2>
+        <div id="stallTxt"></div>
+      </div>
+      <div class="card">
+        <h2>At a glance</h2>
+        <div id="pSum"></div>
+      </div>
+    </div>
+
+    <div class="pane" id="pMeasure">
+      <div class="card">
+        <h2>Waist trend</h2>
+        <svg class="chart" id="chartWaist" viewBox="0 0 600 150" preserveAspectRatio="none"></svg>
+        <div class="hint" id="mTxt" style="margin-top:8px"></div>
+      </div>
+    </div>
+
+    <div class="pane" id="pPhoto">
+      <div class="card">
+        <h2>Add a progress photo</h2>
+        <div class="hint">Use the same light, place and pose every week.</div>
+        <div class="row" style="margin-top:10px">
+          <select id="pView"><option>Front</option><option>Side</option><option>Back</option></select>
+          <input type="file" id="pFile" accept="image/*" style="padding:9px">
+        </div>
+        <button class="btn" id="pSave" style="margin-top:10px">Save photo</button>
+        <div class="hint" style="margin-top:8px">Photos stay until you refresh the page.</div>
+      </div>
+      <div class="card">
+        <h2>First vs latest</h2>
+        <div id="cmp" class="hint">Add at least 2 photos to compare.</div>
+      </div>
+      <div class="card">
+        <h2>All photos</h2>
+        <div class="photos" id="photoGrid"></div>
+      </div>
+    </div>
+
+    <div class="pane" id="pLog">
+      <div class="card">
+        <h2>Weekly report</h2>
+        <div id="weekReport2"></div>
+      </div>
+      <div class="card">
+        <h2>Auto update system</h2>
+        <div id="autoStatus" class="hint"></div>
+        <div class="row" style="margin-top:10px"><button class="btn sec" id="autoToggle">Turn auto update ON/OFF</button></div>
+        <div id="logHist" style="margin-top:10px"></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="wrap">
+  <section class="screen" id="s-agent">
+    <button class="back" data-go="home">← Back</button>
+    <div class="card">
+      <h2>Live Agent</h2>
+      <div class="hint">Ask anything about today's food, workout, weight or progress. I answer from your current data.</div>
+      <div class="chips" style="margin-top:12px">
+        <button data-ask="How many calories are left?">Calories left?</button>
+        <button data-ask="How much protein do I still need?">Protein left?</button>
+        <button data-ask="What is my workout today?">Today's workout</button>
+        <button data-ask="How is my weight progress?">Weight progress</button>
+        <button data-ask="How did I sleep?">Sleep</button>
+        <button data-ask="I am stuck, I am not losing weight">Plateau?</button>
+      </div>
+    </div>
+    <div class="card">
+      <div id="chat" class="chat"></div>
+      <div class="row" style="margin-top:10px">
+        <input id="msgIn" placeholder="Type your question...">
+        <button class="btn small" id="msgSend" style="flex:0">Send</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<nav>
+  <button data-go="home"><span class="i">🏠</span>Dashboard</button>
+  <button data-go="food"><span class="i">🍽️</span>Food</button>
+  <button data-go="gym"><span class="i">🏋️</span>Gym</button>
+  <button data-go="weight"><span class="i">⚖️</span>Body</button>
+  <button data-go="progress"><span class="i">📈</span>Progress</button>
+  <button data-go="agent"><span class="i">🤖</span>Agent</button>
+</nav>
+
+<div id="help">
+  <div class="card">
+    <div class="row" style="margin-bottom:8px"><h2 style="flex:1">How to use this app</h2><button class="iconbtn" id="helpClose">✕</button></div>
+    <ul>
+      <li><b>Food & Water:</b> tap what you ate or drank. Calories, protein and water are tracked for you.</li>
+      <li><b>Workout:</b> shows today's exercises. Enter weight and reps, then save. The app suggests your next weight.</li>
+      <li><b>Body:</b> enter your weight, steps, sleep and measurements every day or week.</li>
+      <li><b>Progress:</b> charts, photos, a weekly report and the auto update history.</li>
+      <li><b>Deload:</b> every 4th week and after nights with under 6 hours of sleep, the app lowers the workout volume so you recover.</li>
+      <li><b>Mode:</b> 🌙 switches between dark and light mode.</li>
+    </ul>
+    <div class="tip">If you have an illness or feel pain during a workout, see a doctor first.</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------- splash ---------- */
+(function(){
+  const t="Taha Fitness".split(""),box=document.getElementById("splashTitle");
+  t.forEach((c,i)=>{const s=document.createElement("span");s.textContent=c===" "?"\u00a0":c;if(i>=5)s.className="acc";s.style.animationDelay=(0.2+i*0.07)+"s";box.appendChild(s);});
+  setTimeout(()=>document.getElementById("splash").classList.add("gone"),2900);
+})();
+
+/* ---------- state ---------- */
+const S={
+  user:null, step:0,
+  targets:{kcal:0,pro:0,tdee:0}, adj:0,
+  food:[], water:0,
+  weights:[],     // {d,w,steps,sleep}
+  meas:[],        // {d,waist,chest,arm,thigh}
+  photos:[],      // {d,view,src}
+  sessions:{},    // exercise -> [{kg,reps,hit,ts}]
+  hard:false, autoUpdate:true,
+  log:[], start:Date.now(), done:{}
+};
+
+const DAYS=[
+ {n:"Monday",t:"Chest & Triceps",ex:[["Bench Press",4,"6-8"],["Incline Dumbbell Press",3,"8-10"],["Cable Fly",3,"12-15"],["Triceps Pushdown",3,"10-12"]]},
+ {n:"Tuesday",t:"Back & Biceps",ex:[["Lat Pulldown",4,"8-10"],["Seated Cable Row",3,"10-12"],["One-Arm Dumbbell Row",3,"10"],["Face Pull",3,"15"],["Barbell Curl",3,"10-12"]]},
+ {n:"Wednesday",t:"Legs & Abs",ex:[["Squat",4,"6-8"],["Romanian Deadlift",3,"8-10"],["Leg Press",3,"12"],["Leg Curl",3,"12"],["Calf Raise",4,"15"]]},
+ {n:"Thursday",t:"Rest & light walk",ex:[]},
+ {n:"Friday",t:"Shoulders & Arms",ex:[["Overhead Press",4,"6-8"],["Lateral Raise",4,"12-15"],["Rear Delt Fly",3,"15"],["Skull Crusher",3,"10-12"]]},
+ {n:"Saturday",t:"Weak Points",ex:[["Hip Thrust",3,"10"],["Bulgarian Split Squat",3,"10"],["Cable Crunch",3,"15"]]},
+ {n:"Sunday",t:"Full rest",ex:[]}
+];
+const MEALS={
+  breakfast:[{n:"Oats + milk + banana",k:380,p:22},{n:"3 eggs + 2 roti",k:420,p:25}],
+  lunch:[{n:"Chicken 150g + rice + salad",k:520,p:45},{n:"Dal + 2 roti + vegetables",k:500,p:22}],
+  dinner:[{n:"Chicken 150g + 2 roti + vegetables",k:480,p:45},{n:"Paneer 150g + 2 roti",k:520,p:35}],
+  snack:[{n:"Whey 1 scoop + banana",k:200,p:25},{n:"Milk + 10 almonds",k:220,p:10}]
+};
+const MEAL_LABEL={breakfast:"Breakfast",lunch:"Lunch",dinner:"Dinner",snack:"Snack"};
+
+const today=()=>(new Date().getDay()+6)%7;
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const avg=a=>a.reduce((x,y)=>x+y,0)/a.length;
+const weekNo=()=>Math.floor((Date.now()-S.start)/(7*864e5))+1;
+const isDeloadWeek=()=>weekNo()%4===0;
+function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("on");setTimeout(()=>t.classList.remove("on"),1800);}
+function log(msg){S.log.unshift(new Date().toLocaleDateString()+" — "+msg);S.log=S.log.slice(0,25);}
+
+/* ---------- targets ---------- */
+function calcTargets(){
+  const u=S.user; if(!u||!u.wt||!u.ht) return;
+  const bmr=10*u.wt+6.25*u.ht-5*u.age+(u.sex==="m"?5:-161);
+  const tdee=bmr*u.act;
+  S.targets={tdee:Math.round(tdee),kcal:Math.round(tdee*0.8)+S.adj,pro:Math.round(u.wt*2.2)};
+}
+
+/* ---------- auto update: weight trend, sleep, deload ---------- */
+function autoAdjust(){
+  const w=S.weights.filter(x=>x.w!=null).map(x=>x.w);
+  if(w.length<10) return null;
+  const weekly=avg(w.slice(-14,-7))-avg(w.slice(-7));
+  if(weekly>0.7) return {d:100,msg:"Your weight is dropping very fast, so calories were raised by 100 to protect muscle."};
+  if(weekly<0.2) return {d:-100,msg:"Your weight has stalled, so calories were lowered by 100. Try adding 1,000 steps a day too."};
+  return {d:0,msg:"Your weight is dropping at a good pace. No change made."};
+}
+function lastSleep(){const s=S.weights.filter(x=>x.sleep!=null);return s.length?s[s.length-1].sleep:null;}
+function weekReportHtml(){
+  const ws=S.weights.filter(x=>x.w!=null).slice(-7).map(x=>x.w);
+  const change=ws.length>1?(ws[ws.length-1]-ws[0]).toFixed(1)+" kg":"—";
+  const m=S.meas.slice(-2);
+  const waist=m.length>1&&m[0].waist&&m[1].waist?(m[1].waist-m[0].waist).toFixed(1)+" cm":"—";
+  const cutoff=Date.now()-7*864e5;
+  const sess=Object.values(S.sessions).flat().filter(s=>s.ts>cutoff).length;
+  const st=S.weights.slice(-7).filter(x=>x.steps).map(x=>x.steps);
+  const steps=st.length?Math.round(avg(st)):"—";
+  return `<div class="grid3">
+    <div class="field" style="margin:0"><span class="hint">Weight change</span><b style="font-size:20px">${change}</b></div>
+    <div class="field" style="margin:0"><span class="hint">Waist change</span><b style="font-size:20px">${waist}</b></div>
+    <div class="field" style="margin:0"><span class="hint">Workouts</span><b style="font-size:20px">${sess}</b></div>
+  </div><div class="hint">Average steps: ${steps}</div>`;
+}
+
+/* ---------- setup ---------- */
+const SETUP=[
+  {q:"What is your name?",h:"Just your first name is fine.",f:[{id:"name",label:"Name",type:"text",ph:"Taha"}]},
+  {q:"Your height and weight?",h:"Height in centimeters (e.g. 175). Weight in kilograms (e.g. 68).",f:[{id:"ht",label:"Height (cm)",type:"number",ph:"175"},{id:"wt",label:"Weight (kg)",type:"number",ph:"68",step:"0.1"}]},
+  {q:"Your age and gender?",h:"This is only used to estimate your calories.",f:[{id:"age",label:"Age",type:"number",ph:"22"},{id:"sex",label:"Gender",type:"select",opts:[["m","Male"],["f","Female"]]}]},
+  {q:"How active are you on a usual day?",h:"This helps estimate your calorie needs.",f:[{id:"act",label:"Usual day",type:"select",opts:[["1.4","Mostly sitting (desk job)"],["1.55","Some walking around"],["1.7","Physically active or I work out"]]}]}
+];
+function renderSetup(){
+  const st=SETUP[S.step];
+  document.getElementById("stepBar").innerHTML=SETUP.map((_,i)=>`<i class="${i<=S.step?"on":""}"></i>`).join("");
+  document.getElementById("setupCard").innerHTML=`
+    <h2>Step ${S.step+1} of ${SETUP.length}</h2>
+    <div class="hint" style="margin-bottom:14px">${st.h}</div>
+    <div style="font-size:19px;font-weight:700;margin-bottom:14px">${st.q}</div>
+    ${st.f.map(f=>`<div class="field"><label for="su_${f.id}">${f.label}</label>
+      ${f.type==="select"?`<select id="su_${f.id}">${f.opts.map(o=>`<option value="${o[0]}">${o[1]}</option>`).join("")}</select>`
+      :`<input id="su_${f.id}" type="${f.type}" ${f.step?`step="${f.step}"`:""} placeholder="${f.ph||""}">`}</div>`).join("")}
+    <div class="row" style="margin-top:6px">
+      ${S.step>0?'<button class="btn sec" id="suBack">Back</button>':""}
+      <button class="btn" id="suNext">${S.step===SETUP.length-1?"Start":"Next"}</button>
+    </div>`;
+  if(S.step>0) document.getElementById("suBack").onclick=()=>{S.step--;renderSetup();};
+  document.getElementById("suNext").onclick=()=>{
+    const v={};
+    for(const f of st.f){
+      v[f.id]=document.getElementById("su_"+f.id).value.trim();
+      if(f.type==="number"&&(!v[f.id]||isNaN(+v[f.id]))){toast("Please enter your "+f.label.toLowerCase());return;}
+      if(f.type==="text"&&!v[f.id]){toast("Please enter your name");return;}
+    }
+    S.user=S.user||{};
+    if(v.name) S.user.name=v.name;
+    if(v.ht) S.user.ht=+v.ht;
+    if(v.wt){S.user.wt=+v.wt;S.weights.push({d:new Date().toLocaleDateString(),w:+v.wt,steps:null,sleep:null});}
+    if(v.age) S.user.age=+v.age;
+    if(v.sex) S.user.sex=v.sex;
+    if(v.act) S.user.act=+v.act;
+    if(S.step<SETUP.length-1){S.step++;renderSetup();}
+    else{calcTargets();log("Profile created");show("home");}
+  };
+}
+
+/* ---------- navigation ---------- */
+function show(id){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("on"));
+  document.getElementById("s-"+id).classList.add("on");
+  document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.go===id));
+  renderAll();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+document.addEventListener("click",e=>{const g=e.target.closest("[data-go]");if(g)show(g.dataset.go);});
+document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll(".tabs button").forEach(x=>x.classList.remove("on"));
+  document.querySelectorAll(".pane").forEach(x=>x.classList.remove("on"));
+  b.classList.add("on");document.getElementById(b.dataset.p).classList.add("on");
+});
+
+/* ---------- food & water ---------- */
+function totals(){return S.food.reduce((a,f)=>({k:a.k+f.k,p:a.p+f.p}),{k:0,p:0});}
+function addFood(n,k,p){S.food.push({n,k:+k||0,p:+p||0});log("Food added: "+n);renderAll();toast("Added ✓");}
+document.querySelectorAll("[data-quick]").forEach(b=>b.onclick=()=>{const[n,k,p]=b.dataset.quick.split("|");addFood(n,k,p);});
+document.getElementById("fAdd").onclick=()=>{
+  const n=fName.value.trim(); if(!n){toast("Please enter a food name");return;}
+  addFood(n,fKcal.value,fPro.value); fName.value=fKcal.value=fPro.value="";
+};
+document.getElementById("clearFood").onclick=()=>{if(confirm("Clear today's list?")){S.food=[];renderAll();}};
+document.getElementById("useMeals").onclick=()=>{
+  Object.keys(MEALS).forEach(k=>{const m=MEALS[k][today()%MEALS[k].length];S.food.push({n:m.n,k:m.k,p:m.p});});
+  log("Planned meals added to today");renderAll();toast("Planned meals added ✓");
+};
+document.querySelectorAll("[data-water]").forEach(b=>b.onclick=()=>{S.water+=+b.dataset.water;log("Water +"+b.dataset.water+" ml");renderAll();});
+document.getElementById("wReset").onclick=()=>{S.water=0;renderAll();};
+function renderFood(){
+  document.getElementById("foodList").innerHTML=S.food.map((f,i)=>
+    `<div class="meal"><div>${esc(f.n)}<small>${f.k} kcal · ${f.p} g protein</small></div>
+     <button class="btn sec small" data-del="${i}">Remove</button></div>`).join("")||'<div class="hint">Nothing logged yet.</div>';
+  document.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{S.food.splice(+b.dataset.del,1);renderAll();});
+  const pct=Math.min(100,S.water/3000*100);
+  document.querySelector("#wBar>div").style.width=pct+"%";
+  document.getElementById("wTxt").textContent=`${(S.water/1000).toFixed(2)} of 3 litres`;
+}
+
+/* ---------- workout ---------- */
+function suggestKg(name){
+  const h=S.sessions[name]||[]; if(!h.length) return null;
+  const l=h[h.length-1]; return l.hit?l.kg+2.5:l.kg;
+}
+function lowSleepToday(){const s=lastSleep();return s!=null&&s<6;}
+function renderGym(){
+  const d=DAYS[today()];
+  const deload=isDeloadWeek()||lowSleepToday();
+  const sets=e=>Math.max(2,e[1]+((S.hard&&!deload)?1:0)-(deload?1:0));
+  document.getElementById("gymTitle").textContent=`Today: ${d.n} — ${d.t}`;
+  document.getElementById("gymNote").textContent=d.ex.length?"Do the sets and reps shown for each exercise.":"No workout today. Rest and do a 30-minute walk.";
+  document.getElementById("gymStatus").innerHTML=
+    `<span class="tag">Week ${weekNo()}</span> ${isDeloadWeek()?'<span class="tag warn">Deload week</span>':""} ${lowSleepToday()?'<span class="tag warn">Low sleep: lighter day</span>':""} ${S.hard?'<span class="tag ok">Harder mode</span>':""}`;
+  document.getElementById("planGym").innerHTML=d.ex.map((e,i)=>
+    `<div class="ex"><div><b>${e[0]}</b><small class="hint" style="display:block">${sets(e)} sets × ${e[2]} reps</small></div>
+     <span class="tag ${S.done[d.n+i]?"ok":""}">${S.done[d.n+i]?"✓ Done":"To do"}</span></div>`).join("")||'<div class="hint">Rest day ✓</div>';
+  document.getElementById("todayTitle").textContent="Today's workout — "+d.n;
+  document.getElementById("logList").innerHTML=d.ex.map((e,i)=>{
+    const sug=suggestKg(e[0]);
+    return `<div class="row" style="margin-bottom:8px"><div style="flex:2"><b>${e[0]}</b><small class="hint" style="display:block">${sug==null?"First time: start light":"Try next: "+sug+" kg"}</small></div>
+      <input type="number" step="0.5" placeholder="kg" data-kg="${i}" style="flex:1"><input type="number" placeholder="reps" data-rp="${i}" style="flex:1"></div>`;
+  }).join("")||'<div class="hint">Nothing to log today.</div>';
+  document.getElementById("hardBtn").textContent=S.hard?"Back to normal":"Harder (+1 set)";
+  renderExChart();
+}
+document.getElementById("hardBtn").onclick=()=>{S.hard=!S.hard;renderAll();toast(S.hard?"Harder mode on":"Normal mode on");};
+document.getElementById("saveLog").onclick=()=>{
+  const d=DAYS[today()]; let n=0;
+  d.ex.forEach((e,i)=>{
+    const kg=parseFloat(document.querySelector(`[data-kg="${i}"]`).value);
+    const rp=parseInt(document.querySelector(`[data-rp="${i}"]`).value);
+    if(isNaN(kg)||isNaN(rp)) return;
+    const top=parseInt(e[2].split("-").pop());
+    (S.sessions[e[0]]=S.sessions[e[0]]||[]).push({kg,reps:rp,hit:rp>=top,ts:Date.now()});
+    n++;
+  });
+  if(!n){toast("Please enter weight and reps first");return;}
+  if(S.autoUpdate) d.ex.forEach(e=>{const h=S.sessions[e[0]]||[];if(h.length)log(`${e[0]}: ${h[h.length-1].hit?"next time +2.5 kg":"same weight, focus on reps"}`);});
+  log("Workout saved ("+n+" exercises)");
+  renderAll();toast("Saved ✓");
+};
+document.getElementById("finishGym").onclick=()=>{
+  const d=DAYS[today()]; d.ex.forEach((e,i)=>S.done[d.n+i]=true);
+  log("Today's workout completed"); renderAll(); toast("Well done! Workout complete ✓");
+};
+document.getElementById("exSel").onchange=renderExChart;
+function renderExChart(){
+  const sel=document.getElementById("exSel");
+  const all=[...new Set(DAYS.flatMap(d=>d.ex.map(e=>e[0])))];
+  if(!sel.options.length) sel.innerHTML=all.map(n=>`<option>${n}</option>`).join("");
+  const name=sel.value||all[0];
+  const cutoff=Date.now()-28*864e5;
+  const h=(S.sessions[name]||[]).filter(s=>s.ts>=cutoff);
+  lineChart("exChart",h.map(s=>s.kg),"#34d399");
+  document.getElementById("exTxt").textContent=h.length
+    ? `${name}: ${h.length} sessions in 4 weeks. First ${h[0].kg} kg → latest ${h[h.length-1].kg} kg.`
+    : `${name}: no data in the last 4 weeks.`;
+}
+
+/* ---------- body: weight, sleep, steps, measurements ---------- */
+document.getElementById("wSave").onclick=()=>{
+  const w=parseFloat(wIn.value), s=parseInt(sIn.value), sl=parseFloat(slIn.value);
+  if(isNaN(w)&&isNaN(s)&&isNaN(sl)){toast("Enter at least one number");return;}
+  S.weights.push({d:new Date().toLocaleDateString(),w:isNaN(w)?null:w,steps:isNaN(s)?null:s,sleep:isNaN(sl)?null:sl});
+  if(!isNaN(w)) S.user.wt=w;
+  wIn.value=sIn.value=slIn.value="";
+  const msg=document.getElementById("wMsg"); msg.style.display="block";
+  const a=autoAdjust();
+  if(a&&S.autoUpdate&&a.d){S.adj+=a.d;log("Calories "+(a.d>0?"+":"")+a.d+" (weight trend)");}
+  msg.textContent = a ? (S.autoUpdate?a.msg:"Auto update is OFF, so calories were not changed.") : "Saved ✓. After 10 days of weight entries, the app will start adjusting your calories.";
+  if(!isNaN(w)) log("Weight "+w+" kg saved");
+  calcTargets(); renderAll();
+};
+document.getElementById("mSave").onclick=()=>{
+  const v={waist:parseFloat(mWaist.value),chest:parseFloat(mChest.value),arm:parseFloat(mArm.value),thigh:parseFloat(mThigh.value)};
+  if(Object.values(v).every(isNaN)){toast("Enter at least one measurement");return;}
+  S.meas.push({d:new Date().toLocaleDateString(),...v});
+  mWaist.value=mChest.value=mArm.value=mThigh.value="";
+  log("Measurements saved"); renderAll(); toast("Saved ✓");
+};
+
+/* ---------- photos ---------- */
+document.getElementById("pSave").onclick=()=>{
+  const f=pFile.files[0]; if(!f){toast("Choose a photo first");return;}
+  const r=new FileReader();
+  r.onload=()=>{S.photos.push({d:new Date().toLocaleDateString(),view:pView.value,src:r.result});log("Photo added ("+pView.value+")");pFile.value="";renderPhotos();renderLogPane();};
+  r.readAsDataURL(f);
+};
+function renderPhotos(){
+  document.getElementById("photoGrid").innerHTML=S.photos.slice().reverse().map(p=>
+    `<figure><img src="${p.src}" alt=""><figcaption>${p.d} · ${p.view}</figcaption></figure>`).join("")||'<div class="hint">No photos yet.</div>';
+  const c=document.getElementById("cmp");
+  if(S.photos.length<2){c.textContent="Add at least 2 photos to compare.";return;}
+  const f=S.photos[0],l=S.photos[S.photos.length-1];
+  c.innerHTML=`<div class="cmp">
+    <figure style="margin:0"><img src="${f.src}"><figcaption class="hint">First: ${f.d} · ${f.view}</figcaption></figure>
+    <figure style="margin:0"><img src="${l.src}"><figcaption class="hint">Latest: ${l.d} · ${l.view}</figcaption></figure></div>`;
+}
+
+/* ---------- charts ---------- */
+function lineChart(id,values,color){
+  color=color||"#ff6b35";
+  const svg=document.getElementById(id);
+  if(values.length<2){svg.innerHTML='<text x="16" y="80" fill="#9aa3b5" font-size="20">Needs 2 or more entries</text>';return;}
+  const mn=Math.min(...values)-0.5,mx=Math.max(...values)+0.5;
+  const pts=values.map((v,i)=>[i*(600/(values.length-1)),136-(v-mn)/(mx-mn)*124]);
+  svg.innerHTML=`<path d="${pts.map((p,i)=>(i?"L":"M")+p[0].toFixed(1)+","+p[1].toFixed(1)).join(" ")}" fill="none" stroke="${color}" stroke-width="3"/>`+
+    pts.map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="5" fill="#ffb347"/>`).join("");
+}
+function renderMeasure(){
+  const wa=S.meas.filter(m=>!isNaN(m.waist)).map(m=>m.waist);
+  lineChart("chartWaist",wa,"#60a5fa");
+  document.getElementById("mTxt").textContent= wa.length>1?`Waist: ${wa[0]} cm → ${wa[wa.length-1]} cm (${(wa[wa.length-1]-wa[0]).toFixed(1)} cm)`:"Need 2 weekly waist measurements to show a trend.";
+  document.getElementById("mHist").innerHTML=S.meas.length?S.meas.slice().reverse().map(m=>
+    `${m.d}: waist ${m.waist||"-"} · chest ${m.chest||"-"} · arm ${m.arm||"-"} · thigh ${m.thigh||"-"}`).join("<br>"):"No measurements yet.";
+}
+
+/* ---------- progress ---------- */
+function renderProgress(){
+  const ws=S.weights.filter(x=>x.w!=null).map(x=>x.w);
+  lineChart("chart",ws);
+  document.getElementById("pTxt").textContent= ws.length?`Start: ${ws[0]} kg · Now: ${ws[ws.length-1]} kg · Change: ${(ws[ws.length-1]-ws[0]).toFixed(1)} kg`:"No weight entered yet.";
+  const a=autoAdjust();
+  document.getElementById("stallTxt").innerHTML= a
+    ? `<div class="tip">${S.autoUpdate?a.msg:"Auto update is OFF."}</div><div class="hint" style="margin-top:6px">Calorie target: <b>${S.targets.kcal} kcal</b> (adjustment ${S.adj>=0?"+":""}${S.adj})</div>`
+    : `<div class="hint">Enter weight for 10 days so the app can check your progress.</div>`;
+  const wa=S.meas.filter(m=>!isNaN(m.waist)).map(m=>m.waist);
+  document.getElementById("pSum").innerHTML=`
+    <div class="meal"><span>Waist change</span><b>${wa.length>1?(wa[wa.length-1]-wa[0]).toFixed(1)+" cm":"—"}</b></div>
+    <div class="meal"><span>Workout sessions</span><b>${Object.values(S.sessions).flat().length}</b></div>
+    <div class="meal"><span>Photos</span><b>${S.photos.length}</b></div>
+    <div class="meal"><span>Current week</span><b>${weekNo()}${isDeloadWeek()?" (deload)":""}</b></div>`;
+  document.getElementById("weekReport2").innerHTML=weekReportHtml();
+  renderMeasure();
+}
+function renderLogPane(){
+  document.getElementById("autoStatus").textContent=`Auto update is ${S.autoUpdate?"ON":"OFF"}. Week ${weekNo()}${isDeloadWeek()?" (deload week: fewer sets)":""}.`;
+  document.getElementById("autoToggle").textContent = S.autoUpdate?"Turn auto update OFF":"Turn auto update ON";
+  document.getElementById("logHist").innerHTML=S.log.map(l=>`<div class="meal small">${esc(l)}</div>`).join("")||'<div class="hint">No history yet.</div>';
+}
+document.getElementById("autoToggle").onclick=()=>{S.autoUpdate=!S.autoUpdate;log("Auto update "+(S.autoUpdate?"ON":"OFF"));renderAll();};
+
+/* ---------- home ---------- */
+function renderHome(){
+  const t=totals(),T=S.targets;
+  document.getElementById("stKcal").textContent=t.k;
+  document.getElementById("stLeft").textContent=Math.max(0,T.kcal-t.k);
+  document.getElementById("stPro").textContent=t.p;
+  const kb=document.getElementById("kBar");
+  kb.firstElementChild.style.width=(T.kcal?Math.min(100,t.k/T.kcal*100):0)+"%";
+  kb.classList.toggle("over",t.k>T.kcal);
+  const rp=T.pro-t.p;
+  document.getElementById("kHint").textContent=!S.food.length?"Nothing logged today. Tap Food & Water to add it."
+    :(rp>0?`You need ${rp} g more protein. Try eggs, chicken or whey.`:"Protein target reached. Great job!");
+  document.getElementById("weekTitle").textContent=`Week ${weekNo()}${isDeloadWeek()?" — deload week":""}`;
+  document.getElementById("weekReport").innerHTML=weekReportHtml();
+  document.getElementById("planMeals").innerHTML=Object.keys(MEALS).map(k=>{
+    const m=MEALS[k][today()%MEALS[k].length];
+    return `<div class="meal"><div><b>${MEAL_LABEL[k]}:</b> ${m.n}<small>${m.k} kcal · ${m.p} g protein</small></div></div>`;
+  }).join("");
+  const a=autoAdjust();
+  document.getElementById("advice").textContent = S.weights.filter(x=>x.w!=null).length<10
+    ? "Log your weight every day. After 10 days, the app will adjust your calories automatically."
+    : (a?a.msg:"");
+  const d=DAYS[today()];
+  document.getElementById("todayTitle").textContent="Today's workout — "+d.n;
+  document.getElementById("planGym").innerHTML=d.ex.map((e,i)=>
+    `<div class="ex"><div><b>${e[0]}</b><small class="hint" style="display:block">${Math.max(2,e[1]+(S.hard?1:0))} sets × ${e[2]} reps</small></div>
+     <span class="tag ${S.done[d.n+i]?"ok":""}">${S.done[d.n+i]?"✓ Done":"To do"}</span></div>`).join("")||'<div class="hint">Rest day ✓</div>';
+}
+function renderGreeting(){
+  document.querySelector("nav").style.display=S.user?"flex":"none";
+  const h=new Date().getHours();
+  const hi=h<12?"Good morning":h<17?"Good afternoon":"Good evening";
+  document.getElementById("greet").textContent=S.user?`${hi}${S.user.name?", "+S.user.name:""}`:"Set up your profile to get started";
+}
+function renderAll(){
+  renderGreeting();
+  if(!S.user||!S.targets.kcal) return;
+  calcTargets();
+  renderFood(); renderGym(); renderHome(); renderProgress(); renderPhotos(); renderLogPane();
+}
+
+/* ---------- live agent ---------- */
+function addMsg(who,text){
+  const c=document.getElementById("chat");
+  const d=document.createElement("div");
+  d.className="msg "+(who==="me"?"me":"bot");
+  d.textContent=text;
+  c.appendChild(d); c.scrollTop=c.scrollHeight;
+}
+function agentReply(q){
+  q=q.toLowerCase();
+  const t=totals(), T=S.targets, d=DAYS[today()];
+  const ws=S.weights.filter(x=>x.w!=null).map(x=>x.w);
+  const sl=lastSleep();
+  const stepRow=S.weights.filter(x=>x.steps!=null).slice(-1)[0];
+  if(/\b(hi|hello|hey|salam|assalam)\b/.test(q))
+    return `Hello${S.user&&S.user.name?" "+S.user.name:""}! I'm your live agent. Ask me about calories, protein, water, your workout, sleep, steps, weight or progress.`;
+  if(/protein/.test(q))
+    return T.pro-t.p>0
+      ? `You have ${t.p} g of protein out of ${T.pro} g. You still need ${T.pro-t.p} g. Eggs, chicken, dal or whey are good choices.`
+      : `You have reached your protein target (${t.p} g of ${T.pro} g). Well done.`;
+  if(/calor|kcal|food|eat|diet|left/.test(q))
+    return `Your target is ${T.kcal} kcal. You have eaten ${t.k} kcal, so ${Math.max(0,T.kcal-t.k)} kcal are left today.`;
+  if(/water|drink/.test(q))
+    return `You have had ${(S.water/1000).toFixed(2)} L of water. Aim for 3 L a day.`;
+  if(/sleep/.test(q))
+    return sl==null ? "No sleep logged yet. Enter your sleep hours in the Body tab."
+      : sl<6 ? `You slept ${sl} hours, which is low, so today's workout is lighter. Try for 7 to 8 hours tonight.`
+      : `You slept ${sl} hours. Good, keep it up.`;
+  if(/step|walk/.test(q))
+    return stepRow ? `Your last step count was ${stepRow.steps}. Aim for 8,000 to 10,000 steps a day.`
+      : "No steps logged yet. Enter your steps in the Body tab.";
+  if(/workout|gym|exercise|train/.test(q))
+    return d.ex.length
+      ? `Today is ${d.n}: ${d.t}. Exercises: ${d.ex.map(e=>e[0]).join(", ")}.${(isDeloadWeek()||lowSleepToday())?" Today is a lighter day, so do one set less.":""}`
+      : "Today is a rest day. Take a 30-minute walk and rest well.";
+  if(/weight|kg|progress/.test(q))
+    return ws.length<2 ? "Log your weight for a few days so I can see your trend."
+      : `You started at ${ws[0]} kg and you are now at ${ws[ws.length-1]} kg (${(ws[ws.length-1]-ws[0]).toFixed(1)} kg). ${(autoAdjust()||{msg:""}).msg}`;
+  if(/waist|measure|kamar/.test(q)){
+    const wa=S.meas.filter(m=>m.waist).map(m=>m.waist);
+    return wa.length ? `Your latest waist is ${wa[wa.length-1]} cm.`+(wa.length>1?` It has changed by ${(wa[wa.length-1]-wa[0]).toFixed(1)} cm since you started.`:"")
+      : "No waist measurement yet. Measure once a week at the navel.";
+  }
+  if(/stall|plateau|stuck|not losing/.test(q))
+    return (autoAdjust()||{msg:"Log 10 days of weight so I can check for a plateau."}).msg;
+  if(/tired|motivat|give up|lazy/.test(q))
+    return "Consistency matters more than perfection. Finish one small task today, even a short workout, and keep going.";
+  return "I can help with calories left, protein, water, workout, sleep, steps, weight, waist and plateau. Try one of the quick buttons above.";
+}
+function askAgent(q){
+  q=(q||"").trim(); if(!q) return;
+  addMsg("me",q);
+  setTimeout(()=>addMsg("bot",agentReply(q)),300);
+}
+document.getElementById("msgSend").onclick=()=>{askAgent(msgIn.value);msgIn.value="";};
+msgIn.addEventListener("keydown",e=>{if(e.key==="Enter"){askAgent(msgIn.value);msgIn.value="";}});
+document.querySelectorAll("[data-ask]").forEach(b=>b.onclick=()=>askAgent(b.dataset.ask));
+
+/* ---------- theme & help ---------- */
+document.getElementById("themeBtn").onclick=()=>{
+  const light=document.body.dataset.theme==="light";
+  document.body.dataset.theme=light?"dark":"light";
+  document.getElementById("themeBtn").textContent=light?"🌙":"☀️";
+};
+document.getElementById("helpBtn").onclick=()=>document.getElementById("help").classList.add("on");
+document.getElementById("helpClose").onclick=()=>document.getElementById("help").classList.remove("on");
+document.getElementById("help").onclick=e=>{if(e.target.id==="help")e.target.classList.remove("on");};
+
+/* ---------- start ---------- */
+renderSetup();
+document.getElementById("s-setup").classList.add("on");
+addMsg("bot","Hi! I'm your live agent. Finish setup, then ask me anything about your food, workout or progress.");
+renderGreeting();
+</script>
+</body>
+</html>
